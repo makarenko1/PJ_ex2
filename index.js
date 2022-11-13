@@ -1,5 +1,4 @@
 const API_BASE = 'https://api.nobelprize.org/2.1';
-const API_LAUREATES_ENDPOINT = `${API_BASE}/laureates`;
 const API_PRIZES_ENDPOINT = `${API_BASE}/nobelPrizes`;
 
 const app = document.getElementById('app');

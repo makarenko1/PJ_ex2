@@ -1,18 +1,75 @@
-//////////////
-// we have a basic skeleton here to help you start.
-// if you dont want to use it you dont have to -
-// just clear the file and start from scratch
-//////////////
+const API_BASE = 'https://api.nobelprize.org/2.1';
+const API_LAUREATES_ENDPOINT = `${API_BASE}/laureates`;
+const API_PRIZES_ENDPOINT = `${API_BASE}/nobelPrizes`;
 
-// notice in our html we have a node with ID "app"
-// hint: use this reference later to inject data into your page
 const app = document.getElementById('app');
 
-async function getData() {
-  // write you logic for getting the data from the API here
-  // return your data from this function
-  const data = null;
+const dataSort = document.getElementById("data-sort");
+dataSort.addEventListener("change", async (event) => {
+  console.log("Data Sort Change");
+  console.log(event.target.value);
+  
+  const data = await queryEndpoint(API_PRIZES_ENDPOINT);
+  const sortedData = sortData(data, event.target.value);
+  await renderUI(sortedData);
+})
+
+const dataFilter = document.getElementById("data-filter");
+dataFilter.addEventListener("change", async (event) => {
+  console.log("Data Filter Change");
+  console.log(event.target.value);
+
+  const data = await queryEndpoint(API_PRIZES_ENDPOINT);
+  const filteredData = filterData(data, event.target.value);
+  await renderUI(filteredData);
+})
+
+async function queryEndpoint(endpoint) {
+  let data = null;
+  try {
+    const response = await fetch(endpoint);
+    console.log(response);
+    if (response.status === 200) {
+      data = await response.json();
+    }
+  } catch (error) {
+    console.log('api error');
+    console.error(error);
+  }
   return data;
+}
+
+function getLaureates(prize) {
+  let result = ""
+  for (const laureate of prize.laureates) {
+    if (laureate.knownName) {
+      result += `<li>${laureate.knownName.en}</li>`;
+    } else if (laureate.orgName) {
+      result += `<li>${laureate.orgName.en}</li>`;
+    } else {
+      result += `<li>${laureate.fullName.en}</li>`;
+    }
+  } 
+  return result;
+}
+
+async function renderUI(data) {
+  clearUI();
+
+  const { nobelPrizes } = data;
+  const recordTemplate = document.getElementById("data-record-template");
+
+  for (const prize of nobelPrizes) {
+    console.log(prize);
+    const recordClone = recordTemplate.content.firstElementChild.cloneNode(true);
+    const heading = recordClone.querySelector("h2");
+    const text = recordClone.querySelector("p");
+    heading.innerHTML = prize.category.en;
+    text.innerHTML = `Laureates: <ul style="list-style: none;">${getLaureates(prize)}</ul><br>
+                      Prize amount (adj): ${prize.prizeAmountAdjusted}<br>
+                      Year: ${prize.awardYear}`;
+    app.appendChild(recordClone);
+  }
 }
 
 function clearUI() {
@@ -21,19 +78,37 @@ function clearUI() {
   }
 }
 
-async function renderUI(data) {
-
-  clearUI();
-
-  // you have your data! add logic here to render it to the UI
-  // notice in the HTML file we call render();
-  const dummyItemElement = Object.assign(document.createElement("div"), { className: "item" })
-  const dummyContentElement = Object.assign(document.createElement("div"), { className: "content" })
-  dummyContentElement.innerHTML = "hey";
-  dummyItemElement.appendChild(dummyContentElement);
-  app.appendChild(dummyItemElement);
+function filterData(data, key) {
+  data.nobelPrizes = data.nobelPrizes.filter((prize) => {
+    if (key === "chemistry") {
+      return prize.category.en === "Chemistry";
+    } else if (key === "physics") {
+      return prize.category.en === "Physics";
+    } else if (key === "literature") {
+      return prize.category.en === "Literature";
+    } else if (key === "peace") {
+      return prize.category.en === "Peace";
+    } else if (key === "physiology-medicine") {
+      return prize.category.en === "Physiology or Medicine";
+    } else {
+      return true;
+    }
+  });
+  return data;
 }
 
-const data = await getData();
+function sortData(data, key) {
+  data.nobelPrizes = data.nobelPrizes.sort((a, b) => {
+    if (a.awardYear > b.awardYear) {
+      return key === "oldest-first" ? 1 : -1;
+    }
+    if (a.awardYear < b.awardYear) {
+      return key === "newest-first" ? -1 : 1;
+    }
+    return 0;
+  })
+  return data;
+}
 
+const data = await queryEndpoint(API_PRIZES_ENDPOINT);
 await renderUI(data);

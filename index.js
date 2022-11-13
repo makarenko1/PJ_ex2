@@ -9,8 +9,7 @@ dataSort.addEventListener("change", async (event) => {
   console.log(event.target.value);
   
   const data = await queryEndpoint(API_PRIZES_ENDPOINT);
-  const sortedData = sortData(data, event.target.value);
-  await renderUI(sortedData);
+  await renderUI(data);
 })
 
 const dataFilter = document.getElementById("data-filter");
@@ -19,8 +18,7 @@ dataFilter.addEventListener("change", async (event) => {
   console.log(event.target.value);
 
   const data = await queryEndpoint(API_PRIZES_ENDPOINT);
-  const filteredData = filterData(data, event.target.value);
-  await renderUI(filteredData);
+  await renderUI(data);
 })
 
 async function queryEndpoint(endpoint) {
@@ -35,7 +33,7 @@ async function queryEndpoint(endpoint) {
     console.log('api error');
     console.error(error);
   }
-  return data;
+  return sortData(filterData(data, dataFilter.value), dataSort.value);
 }
 
 function getLaureates(prize) {
